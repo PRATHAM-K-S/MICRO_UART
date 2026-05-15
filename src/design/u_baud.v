@@ -14,7 +14,7 @@ module u_baud
   
   reg [CW-1:0] count; //count decleration
   
-	//baud generator logic
+	//baud clock generator logic
   always @(posedge sys_clk or posedge sys_rst) begin
     if(sys_rst) begin
     	count <= 0;
