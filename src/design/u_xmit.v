@@ -66,7 +66,7 @@ module u_xmit
 						uart_XMIT_dataH <= data[0];
 						if(count == 15) begin
 							data 			<= data >> 1'b1;
-							data_sent	<= 1'b1;
+							data_sent	<= data_sent + 1'b1;
 							if(data_sent == (WORD_LEN-1)) begin
 								state <= STOP;
 							end
