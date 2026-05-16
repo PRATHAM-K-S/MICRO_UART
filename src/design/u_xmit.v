@@ -1,4 +1,4 @@
-module xmit
+module u_xmit
 	#(
 		WORD_LEN = 8
 	)
@@ -9,18 +9,17 @@ module xmit
 		input wire [WORD_LEN-1:0] xmit_dataH,
 		output reg uart_XMIT_dataH,
 		output reg xmit_active,
-		output reg xmit_done
+		output reg xmit_doneH
 	);
 
-	localparam SAMPLE = 0;
-	localparam START = 1;
-	localparam TRANSMIT = 2;
-	localparam STOP = 3;
+	localparam SAMPLE 	= 2'b00;
+	localparam START 		= 2'b01;
+	localparam TRANSMIT = 2'b10;
+	localparam STOP 		= 2'b11;
 
 	reg [WORD_LEN-1:0] data;
 	reg [3:0] count;
-	reg [$clog2(WORD_LEN):0] data_sent;
-	reg transmitting;
+	reg [$clog2(WORD_LEN)-1:0] data_sent;
 	reg [1:0] state;
 
 	always @(posedge clk or posedge rst) begin
@@ -28,28 +27,34 @@ module xmit
 			count <= 'b0;
 		end
 		else begin
-			if(!transmitting)
-				count <= 0;
-			else
-				count <= count + 1;
+			count <= (state == SAMPLE)? 4'b0000: (count + 1'b1);
 		end
 	end
 
 	always @(posedge clk or posedge rst) begin
-		if(!rst) begin
-			state <= SAMPLE;
-			uart_XMIT_dataH <= 1'b1;
-			data <= 'b0;
-			data_sent <= 'b0;
-			transmitting <= 1'b0;
+		if(rst) begin
+			state 					<= SAMPLE;
+			uart_XMIT_dataH	<= 1'b1;
+			data 						<= 'b0;
+			data_sent 			<= 'b0;
+			xmit_active			<= 1'b0;
+			xmit_doneH			<= 1'b0;
 		end
 		else begin
 			case(state)
 				SAMPLE:
 					begin
-						data_sent <= 'b0;
-						data <= xmitH? xmit_dataH: 'b0;
-						state <= xmitH? START: SAMPLE;
+						xmit_doneH	<= 1'b0;
+						data_sent		<= 'b0;
+						if (xmitH) begin
+							data				<= xmit_dataH;
+							xmit_active	<= 1'b1;
+							state				<= START;
+						end
+						else begin
+							uart_XMIT_dataH	<= 1'b1;
+							xmit_active			<= 1'b0;
+						end
 					end
 				START:
 					begin
@@ -58,21 +63,30 @@ module xmit
 					end
 				TRANSMIT:
 					begin
-						if(!transmitting) begin
-							uart_XMIT_dataH <= data[0];
-							data <= data >> 1;
-							transmitting <= 1'b1;
+						uart_XMIT_dataH <= data[0];
+						if(count == 15) begin
+							data 			<= data >> 1'b1;
+							data_sent	<= 1'b1;
+							if(data_sent == (WORD_LEN-1)) begin
+								state <= STOP;
+							end
 						end
 						else begin
-							data_sent <= ((data_sent <= WORD_LEN) && (count == 15))? (data_sent + 1): data_sent;
-							transmitting <= (count == 15)? 1'b0: 1'b1;
+							data			<= data;
+							data_sent	<= data_sent;
 						end
-						state <= ((data_sent == WORD_LEN) && (count == 15))? STOP: TRANSMIT;
 					end
 				STOP:
 					begin
 						uart_XMIT_dataH <= 1'b1;
-						state <= (count == 15)? SAMPLE: STOP;
+						if(count == 15) begin
+							xmit_active	<= 1'b0;
+							xmit_doneH	<= 1'b1;
+							state				<= SAMPLE;
+						end
+						else begin
+							state <= STOP;
+						end
 					end
 				default: state <= SAMPLE;
 			endcase
