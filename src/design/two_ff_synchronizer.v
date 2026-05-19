@@ -1,4 +1,4 @@
-module two_ff_synchoronizer (
+module two_ff_synchronizer (
 	input wire clk_dest,
 	input wire rst_n,
 	input wire async_data,
