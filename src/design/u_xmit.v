@@ -1,6 +1,6 @@
 module u_xmit
 	#(
-		WORD_LEN = 8
+		parameter WORD_LEN = 8
 	)
 	(
 		input wire clk,
