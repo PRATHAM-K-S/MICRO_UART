@@ -68,7 +68,7 @@ module u_rec
 	end
 
 	always @(posedge clk or negedge rst_l) begin
-		if(rst_l) begin
+		if(!rst_l) begin
 			state <= GET_START;
 			rec_dataH <= 'b0;
 			rec_readyH <= 1'b0;
@@ -93,7 +93,7 @@ module u_rec
 					begin
 						if(count == 15) begin
 							data <= {sync_ff2, data[WORD_LEN-1:1]};
-							if(data_received == WORD_LEN) begin
+							if(data_received == WORD_LEN-1) begin
 								data_received <= 0;
 								state <= GET_STOP;
 							end
