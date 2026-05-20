@@ -4,7 +4,7 @@ module u_xmit
 	)
 	(
 		input wire clk,
-		input wire rst,
+		input wire rst_l,
 		input wire xmitH,
 		input wire [WORD_LEN-1:0] xmit_dataH,
 		output reg uart_XMIT_dataH,
@@ -22,8 +22,8 @@ module u_xmit
 	reg [$clog2(WORD_LEN)-1:0] data_sent;
 	reg [1:0] state;
 
-	always @(posedge clk or posedge rst) begin
-		if(rst) begin
+	always @(posedge clk or negedge rst_l) begin
+		if(!rst_l) begin
 			count <= 'b0;
 		end
 		else begin
@@ -31,8 +31,8 @@ module u_xmit
 		end
 	end
 
-	always @(posedge clk or posedge rst) begin
-		if(rst) begin
+	always @(posedge clk or negedge rst_l) begin
+		if(!rst_l) begin
 			state 					<= SAMPLE;
 			uart_XMIT_dataH	<= 1'b1;
 			data 						<= 'b0;

@@ -4,71 +4,101 @@ module u_rec
 	)
 	(
 		input wire clk,
-		input wire rst,
+		input wire rst_l,
 		input wire uart_REC_dataH,
 		output reg [WORD_LEN-1:0] rec_dataH,
 		output reg rec_readyH,
 		output reg rec_busy
 	);
-
+	
+	//fsm states
 	localparam GET_START = 0;
 	localparam GOT_START = 1;
 	localparam RECEIVE = 2;
 	localparam GET_STOP = 3;
-
+	
+	//registers
 	reg [3:0] count;
-	reg [$clog2(WORD_LEN)-1:0] data_received;
+	reg [$clog2(WORD_LEN):0] data_received;
 	reg [1:0] state;
 	reg [WORD_LEN-1:0] data;
 
-	always @(posedge clk or posedge rst) begin
-		if(rst) begin
-			count <= 0;
+	//synchronizer registers
+	reg sync_ff1;
+	reg sync_ff2;
+
+	//Two flip flop synchronizer
+	always @(posedge clk or negedge rst_l) begin
+		if(!rst_l) begin
+			sync_ff1 <= 1'b1;
+			sync_ff2 <= 1'b1;
 		end
 		else begin
-			if (state == GET_START)
-				count <= 0;
-			else if (state == GOT_START) begin
-				if(count == 7)
-					count <= 0;
-				else
-					count <= count + 1'b1;
-			end
-			else 
-				count <= count + 1'b1;
+			sync_ff1 <= uart_REC_dataH;
+			sync_ff2 <= sync_ff2;
 		end
 	end
 
-	always @(posedge clk or posedge rst) begin
-		if(rst) begin
-			state <= GET_START;
-			rec_dataH <= 'b0;
-			rec_readyH <= 1'b0;
-			rec_busy <= 1'b0;
+	//counter
+	always @(posedge clk or negedge rst_l) begin
+		if(!rst_l) begin
+			count <= 0;
 		end
 		else begin
 			case(state)
 				GET_START:
+					count <= 0;
+				GOT_START:
+					begin
+						if(count == 7)
+							count <= 0;
+						else 
+							count <= count + 1;
+					end
+				RECEIVE,
+				GET_STOP:
+					begin
+						if(count == 15)
+							count <= 0;
+						else
+							count <= count + 1;
+					end
+			endcase
+		end
+	end
+
+	always @(posedge clk or negedge rst_l) begin
+		if(rst_l) begin
+			state <= GET_START;
+			rec_dataH <= 'b0;
+			rec_readyH <= 1'b0;
+			rec_busy <= 1'b0;
+			data_received <= 0;
+			data <= 0;
+		end
+		else begin
+			case(state)
+				GET_START://detect start bit
 					begin
 						rec_busy <= 1'b0;
 						rec_readyH <= 1'b0;
-						state <= (uart_REC_dataH == 1'b0)? GOT_START: GET_START;
+						state <= (sync_ff2 == 1'b0)? GOT_START: GET_START;
 					end
 				GOT_START:
 					begin
-						rec_busy <= 1'b1;
-						state <= (count == 7)?((uart_REC_dataH == 1'b0)? RECEIVE: GET_START):GOT_START;
+						rec_busy <= 1'b1;	
+						state <= (count == 7)?((sync_ff2 == 1'b0)? RECEIVE: GET_START):GOT_START;
 					end
 				RECEIVE:
 					begin
 						if(count == 15) begin
 							if(data_received < WORD_LEN) begin
-								data <= data >> 1;
-								data[WORD_LEN-1] <= uart_REC_dataH;
+								data <= {sync_ff2, data[WORD_LEN-1:1]};
 								data_received <= data_received + 1'b1;
 								state <= RECEIVE;
 							end
 							else begin
+								data_received <= 0;
 								state <= GET_STOP;
 							end
 						end
@@ -78,12 +108,13 @@ module u_rec
 					end
 				GET_STOP:
 					begin
-							if ((count == 15) && (uart_REC_dataH == 1'b1)) begin
+							if ((count == 15) && (sync_ff2 == 1'b1)) begin
 								state <= GET_START;
+								rec_busy <= 1'b1;
 								rec_dataH <= data;
 								rec_readyH <= 1'b1;
 							end
-							else if((count == 15) && (uart_REC_dataH == 1'b1)) begin
+							else if((count == 15) && (sync_ff2 == 1'b0)) begin
 								state <= GET_START;
 							end
 							else begin

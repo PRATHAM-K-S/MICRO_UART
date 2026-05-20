@@ -4,8 +4,8 @@ module u_baud
     BAUD = 115200 // required baud rate
   )
   (
-  input wire sys_clk, //main system clock
-  input wire sys_rst, //main system reset
+  input wire clk, //main system clock
+  input wire rst_l, //main system reset
   output reg uart_clk //baud-clock 16 X baud_rate
 	);
   
@@ -15,8 +15,8 @@ module u_baud
   reg [CW-1:0] count; //count decleration
   
 	//baud clock generator logic
-  always @(posedge sys_clk or posedge sys_rst) begin
-    if(sys_rst) begin
+  always @(posedge clk or negedge rst_l) begin
+    if(!rst_l) begin
     	count <= 0;
       	uart_clk <= 0;
     end
