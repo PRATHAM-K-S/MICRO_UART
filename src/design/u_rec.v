@@ -35,7 +35,7 @@ module u_rec
 		end
 		else begin
 			sync_ff1 <= uart_REC_dataH;
-			sync_ff2 <= sync_ff2;
+			sync_ff2 <= sync_ff1;
 		end
 	end
 
@@ -92,14 +92,14 @@ module u_rec
 				RECEIVE:
 					begin
 						if(count == 15) begin
-							if(data_received < WORD_LEN) begin
-								data <= {sync_ff2, data[WORD_LEN-1:1]};
-								data_received <= data_received + 1'b1;
-								state <= RECEIVE;
-							end
-							else begin
+							data <= {sync_ff2, data[WORD_LEN-1:1]};
+							if(data_received == WORD_LEN) begin
 								data_received <= 0;
 								state <= GET_STOP;
+							end
+							else begin
+								data_received <= data_received + 1'b1;
+								state <= RECEIVE;
 							end
 						end
 						else begin
@@ -110,7 +110,7 @@ module u_rec
 					begin
 							if ((count == 15) && (sync_ff2 == 1'b1)) begin
 								state <= GET_START;
-								rec_busy <= 1'b1;
+								rec_busy <= 1'b0;
 								rec_dataH <= data;
 								rec_readyH <= 1'b1;
 							end
@@ -122,6 +122,7 @@ module u_rec
 								rec_dataH <= rec_dataH;
 							end
 					end
+				default: state <= GET_START;
 			endcase
 		end
 	end
