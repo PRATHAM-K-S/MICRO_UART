@@ -81,8 +81,8 @@ module u_rec
 				GET_START://detect start bit
 					begin
 						rec_busy <= 1'b0;
-						rec_readyH <= 1'b0;
-						state <= (sync_ff2 == 1'b0)? GOT_START: GET_START;
+						rec_readyH <= 1'b1;
+                      state <= (uart_REC_dataH == 1'b0)? GOT_START: GET_START;
 					end
 				GOT_START:
 					begin
@@ -91,7 +91,7 @@ module u_rec
 					end
 				RECEIVE:
 					begin
-						if(count == 15) begin
+                      if(count == 14) begin
 							data <= {sync_ff2, data[WORD_LEN-1:1]};
 							if(data_received == WORD_LEN-1) begin
 								data_received <= 0;
@@ -108,13 +108,13 @@ module u_rec
 					end
 				GET_STOP:
 					begin
-							if ((count == 15) && (sync_ff2 == 1'b1)) begin
+                      if ((count == 14) && (sync_ff2 == 1'b1)) begin
 								state <= GET_START;
 								rec_busy <= 1'b0;
 								rec_dataH <= data;
 								rec_readyH <= 1'b1;
 							end
-							else if((count == 15) && (sync_ff2 == 1'b0)) begin
+                      else if((count == 14) && (sync_ff2 == 1'b0)) begin
 								state <= GET_START;
 							end
 							else begin
