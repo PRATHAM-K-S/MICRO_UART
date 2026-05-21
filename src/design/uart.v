@@ -10,10 +10,10 @@ module uart
 		input wire xmitH,
 		input wire [WORD_LEN-1:0] xmit_dataH,
 		input wire uart_REC_dataH,
-		input [WORD_LEN-1:0] rec_dataH,
 		output wire uart_XMIT_dataH,
 		output wire xmit_active,
 		output wire xmit_doneH,
+		output wire [WORD_LEN-1:0] rec_dataH,
 		output wire rec_readyH,
 		output wire rec_busy
 	);
