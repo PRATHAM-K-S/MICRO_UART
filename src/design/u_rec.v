@@ -86,6 +86,7 @@ module u_rec
 					end
 				GOT_START:
 					begin
+						rec_readyH <= 1'b0;
 						rec_busy <= 1'b1;	
 						state <= (count == 7)?((sync_ff2 == 1'b0)? RECEIVE: GET_START):GOT_START;
 					end
