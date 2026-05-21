@@ -40,6 +40,7 @@ module uart
 		.rst_l(sys_rst_l),
 		.xmitH(xmitH),
 		.xmit_dataH(xmit_dataH),
+		.xmit_active(xmit_active),
 		.uart_XMIT_dataH(uart_XMIT_dataH),
 		.xmit_doneH(xmit_doneH)
 	);
