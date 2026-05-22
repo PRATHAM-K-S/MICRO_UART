@@ -38,13 +38,12 @@ module u_xmit
 			data 						<= 'b0;
 			data_sent 			<= 'b0;
 			xmit_active			<= 1'b0;
-			xmit_doneH			<= 1'b0;
+			xmit_doneH			<= 1'b1;
 		end
 		else begin
 			case(state)
 				SAMPLE:
 					begin
-						xmit_doneH	<= 1'b0;
 						data_sent		<= 'b0;
 						if (xmitH) begin
 							data				<= xmit_dataH;
@@ -58,6 +57,7 @@ module u_xmit
 					end
 				START:
 					begin
+						xmit_doneH <= 1'b0;
 						uart_XMIT_dataH <= 1'b0;
 						state <= (count == 15)? TRANSMIT: START;
 					end
