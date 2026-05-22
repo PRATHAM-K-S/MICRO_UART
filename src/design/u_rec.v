@@ -71,7 +71,7 @@ module u_rec
 		if(!rst_l) begin
 			state <= GET_START;
 			rec_dataH <= 'b0;
-			rec_readyH <= 1'b0;
+			rec_readyH <= 1'b1;
 			rec_busy <= 1'b0;
 			data_received <= 0;
 			data <= 0;
