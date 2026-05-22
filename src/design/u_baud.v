@@ -1,7 +1,7 @@
 module u_baud
 	#(
-  	XTAL_CLK = 50000000, //main clock frequency
-    BAUD = 115200 // required baud rate
+  	parameter XTAL_CLK = 50000000, //main clock frequency
+    parameter BAUD = 115200 // required baud rate
   )
   (
   input wire clk, //main system clock
